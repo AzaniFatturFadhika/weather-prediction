@@ -97,7 +97,7 @@ async def generate_otp(email: str):
     asyncio.create_task(remove_otp(email))
     send_email("User Verification", f"Your OTP is: {otp}", email)
     print(f"OTP for {email} is: {otp}")
-    
+
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
@@ -126,10 +126,10 @@ async def options_users():
 @app.post("/users/")
 def create_user(user: User):
     hashed_password = bcrypt.hashpw(user.password.encode('utf-8'), bcrypt.gensalt())
-    
+
     conn = get_db_connection()
     cursor = conn.cursor()
-    
+
     try:
         print(user)
         query = "SELECT otp FROM otp WHERE email=%s"
@@ -193,14 +193,14 @@ async def login(user: Login):
 @app.get("/userInfo")
 def getUserInfo(username: str = None):
     username = username if username is not None else 0
-    
+
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
         query = "SELECT username, email FROM users WHERE username=%s"
         cursor.execute(query, (username,))
         row = cursor.fetchone()
-        
+
         print(row);
 
         if row:
@@ -222,14 +222,14 @@ def getUserInfo(username: str = None):
 @app.get("/weather-data/get/last")
 def getLastWeatherData(location: str = None):
     location = location if location is not None else 0
-    
+
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
         query = "SELECT * FROM weather_data WHERE location=%s ORDER BY id DESC LIMIT 1"
         cursor.execute(query, (location,))
         row = cursor.fetchone()
-        
+
         print(row);
 
         if row:
@@ -357,10 +357,10 @@ class User2(BaseModel):
 def forgotPassword(user: User2):
     print(user)
     hashed_password = bcrypt.hashpw(user.password.encode('utf-8'), bcrypt.gensalt())
-    
+
     conn = get_db_connection()
     cursor = conn.cursor()
-    
+
     try:
         query = "SELECT otp FROM otp WHERE email=%s"
         cursor.execute(query, (user.email,))
