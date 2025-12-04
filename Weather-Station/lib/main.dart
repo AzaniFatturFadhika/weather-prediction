@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
-import 'pages/dark_profile.dart';
-import 'pages/dark_setting_page.dart';
+import 'package:provider/provider.dart';
 import 'pages/loginpage.dart';
 import 'pages/registration.dart';
 import 'pages/home.dart';
 import 'pages/settings.dart';
 import 'pages/profile.dart';
-import 'pages/dark_home.dart';
 import 'pages/otp.dart';
+import 'utility/theme_provider.dart';
+
 void main() {
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => ThemeProvider(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -17,23 +22,31 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
     return MaterialApp(
       home: const SplashScreen(),
+      themeMode: themeProvider.themeMode,
       theme: ThemeData(
+        brightness: Brightness.light,
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
+        scaffoldBackgroundColor: const Color(0xFFF0F4F8),
+      ),
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+        primarySwatch: Colors.blue,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+        scaffoldBackgroundColor: const Color(0xFF121212),
+        // Further customizations for dark theme
       ),
       routes: {
         '/login': (context) => const LoginPage(),
         '/reg': (context) => const RegistrationPage(),
-        '/home': (context) => const HomePage(), // Add this line
+        '/home': (context) => const HomePage(),
         '/settings': (context) => const SettingsPage(),
-        '/profile':(context) => const ProfilePage(),
-        '/darksettings': (context) => const DarkSettingsPage(),
-        '/darkhome': (context) => const DarkHomePage(),
-        '/darkprofile': (context) => const DarkProfilePage(),
+        '/profile': (context) => const ProfilePage(),
         '/otp': (context) => const OtpPage(),
-
       },
     );
   }

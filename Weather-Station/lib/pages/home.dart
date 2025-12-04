@@ -1,3 +1,5 @@
+import 'package:demo1/pages/profile.dart';
+import 'package:demo1/pages/settings.dart';
 import 'package:demo1/pages/variables.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
@@ -14,10 +16,78 @@ class HomePage extends StatefulWidget {
   _HomePageState createState() => _HomePageState();
 }
 
-String _latitude = '';
-String _longitude = '';
+class _HomePageState extends State<HomePage> {
+  int _selectedIndex = 0;
 
-class _HomePageState extends State<HomePage>
+  static const List<Widget> _widgetOptions = <Widget>[
+    HomePageContent(),
+    ProfilePage(),
+    SettingsPage(),
+  ];
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          "Weather Station",
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
+        ),
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Theme.of(context).colorScheme.primary,
+                Theme.of(context).colorScheme.secondary
+              ],
+            ),
+          ),
+        ),
+        elevation: 0,
+        automaticallyImplyLeading: false, // Remove hamburger icon
+      ),
+      body: Center(
+        child: _widgetOptions.elementAt(_selectedIndex),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profile',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: 'Settings',
+          ),
+        ],
+        currentIndex: _selectedIndex,
+        selectedItemColor: Theme.of(context).colorScheme.primary,
+        onTap: _onItemTapped,
+      ),
+    );
+  }
+}
+
+class HomePageContent extends StatefulWidget {
+  const HomePageContent({super.key});
+
+  @override
+  _HomePageContentState createState() => _HomePageContentState();
+}
+
+class _HomePageContentState extends State<HomePageContent>
     with SingleTickerProviderStateMixin {
   bool _isLoading = true;
   double rating = 0.0;
@@ -32,9 +102,11 @@ class _HomePageState extends State<HomePage>
     final response =
         await http.get(Uri.parse('$myDomain/userInfo?username=$myUsername'));
     if (response.statusCode == 200) {
-      setState(() {
-        userInfo = json.decode(response.body)['records'];
-      });
+      if (mounted) {
+        setState(() {
+          userInfo = json.decode(response.body)['records'];
+        });
+      }
     } else {
       throw Exception('Failed to load user data');
     }
@@ -50,50 +122,44 @@ class _HomePageState extends State<HomePage>
           .get(Uri.parse('$myDomain/weather-data/get/last?location=Gazipur'));
 
       if (response.statusCode == 200) {
-        setState(() {
-          // Bungkus response dalam list untuk kompatibilitas dengan struktur kode
-          weatherData = [json.decode(response.body)];
-        });
+        if (mounted) {
+          setState(() {
+            weatherData = [json.decode(response.body)];
+          });
 
-        // Cek apakah data berhasil masuk
-        if (weatherData.isNotEmpty) {
-          // Cek key 'isRaining' untuk menentukan status cuaca
-          if (weatherData[0]['isRaining'] == 0) {
-            setState(() {
-              weatherSummaryStatus = "Sunny";
-            });
-          } else {
-            setState(() {
-              weatherSummaryStatus = "Raining";
-            });
+          if (weatherData.isNotEmpty) {
+            if (weatherData[0]['isRaining'] == 0) {
+              setState(() {
+                weatherSummaryStatus = "Sunny";
+              });
+            } else {
+              setState(() {
+                weatherSummaryStatus = "Raining";
+              });
+            }
           }
         }
-      } else {
-        throw Exception('Failed to load weather data');
       }
     } catch (e) {
       print('Error fetching weather data: $e');
-      // Jangan throw exception agar app tidak crash
     }
   }
 
   Future<void> fetchWeatherForecast() async {
     try {
-      // Get current date
       final now = DateTime.now();
       final response = await http.get(Uri.parse(
           '$myDomain/weather-data/get-predicted-data?day=${now.day}&month=${now.month}&year=${now.year}'));
 
       if (response.statusCode == 200) {
-        setState(() {
-          weatherForecastData = json.decode(response.body);
-        });
-      } else {
-        throw Exception('Failed to load weather forecast data');
+        if (mounted) {
+          setState(() {
+            weatherForecastData = json.decode(response.body);
+          });
+        }
       }
     } catch (e) {
       print('Error fetching weather forecast: $e');
-      // Jangan throw exception agar app tidak crash
     }
   }
 
@@ -102,16 +168,14 @@ class _HomePageState extends State<HomePage>
       Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
-      setState(() {
-        _latitude = 'Latitude: ${position.latitude}';
-        _longitude = 'Longitude: ${position.longitude}';
-      });
+      String latitude = 'Latitude: ${position.latitude}';
+      String longitude = 'Longitude: ${position.longitude}';
       showDialog(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
             title: const Text('My Location'),
-            content: Text('$_latitude\n$_longitude'),
+            content: Text('$latitude\n$longitude'),
             actions: [
               TextButton(
                 onPressed: () {
@@ -151,7 +215,6 @@ class _HomePageState extends State<HomePage>
   }
 
   void _startAutoRefresh() {
-    // Auto-refresh data setiap 30 detik
     _autoRefreshTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
       if (mounted) {
         _loadData();
@@ -160,86 +223,55 @@ class _HomePageState extends State<HomePage>
   }
 
   Future<void> _loadData() async {
-    setState(() {
-      _isLoading = true;
-    });
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
     await Future.wait([
       fetchWeatherData(),
       fetchUserInfo(),
       fetchWeatherForecast(),
     ]);
-    setState(() {
-      _isLoading = false;
-    });
-    _animationController.forward(from: 0.0);
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+      _animationController.forward(from: 0.0);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          "Weather Station",
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
-        ),
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFF2196F3), Color(0xFF64B5F6)],
-            ),
-          ),
-        ),
-        elevation: 0,
-      ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFFE3F2FD), Color(0xFFBBDEFB)],
-          ),
-        ),
-        child: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : RefreshIndicator(
-                onRefresh: _loadData,
-                child: FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: SafeArea(
-                    child: ListView(
-                      padding: const EdgeInsets.all(16.0),
-                      children: <Widget>[
-                        const SizedBox(height: 8.0),
-                        // Search Bar
-                        _buildSearchBar(),
-                        const SizedBox(height: 20.0),
-                        // Weather Data Cards - Row 1
-                        if (weatherData.isNotEmpty) _buildWeatherRow1(),
-                        const SizedBox(height: 16.0),
-                        // Weather Data Cards - Row 2
-                        if (weatherData.isNotEmpty) _buildWeatherRow2(),
-                        const SizedBox(height: 24.0),
-                        // Summary Circle
-                        _buildCircularSummary(),
-                        const SizedBox(height: 24.0),
-                        // 7-Day Forecast
-                        _buildSevenDayForecastTable(),
-                        const SizedBox(height: 20.0),
-                      ],
-                    ),
-                  ),
+    return _isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : RefreshIndicator(
+            onRefresh: _loadData,
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: SafeArea(
+                child: ListView(
+                  padding: const EdgeInsets.all(16.0),
+                  children: <Widget>[
+                    const SizedBox(height: 8.0),
+                    _buildSearchBar(context),
+                    const SizedBox(height: 20.0),
+                    if (weatherData.isNotEmpty) _buildWeatherRow1(context),
+                    const SizedBox(height: 16.0),
+                    if (weatherData.isNotEmpty) _buildWeatherRow2(context),
+                    const SizedBox(height: 24.0),
+                    _buildCircularSummary(context),
+                    const SizedBox(height: 24.0),
+                    _buildSevenDayForecastTable(context),
+                    const SizedBox(height: 20.0),
+                  ],
                 ),
               ),
-      ),
-      resizeToAvoidBottomInset: false,
-      drawer: _buildDrawer(),
-      bottomNavigationBar: _buildBottomBar(),
-    );
+            ),
+          );
   }
 
-  Widget _buildSearchBar() {
+  Widget _buildSearchBar(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
         boxShadow: [
@@ -252,13 +284,13 @@ class _HomePageState extends State<HomePage>
       ),
       child: TextField(
         controller: searchController,
-        style: const TextStyle(color: Colors.black87),
+        style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
         decoration: InputDecoration(
           hintText: 'Search for cities',
-          hintStyle: TextStyle(color: Colors.grey[600]),
-          prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
+          hintStyle: TextStyle(color: Theme.of(context).hintColor),
+          prefixIcon: Icon(Icons.search, color: Theme.of(context).hintColor),
           filled: true,
-          fillColor: Colors.white,
+          fillColor: Theme.of(context).cardColor,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(30.0),
             borderSide: BorderSide.none,
@@ -272,12 +304,13 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-  Widget _buildWeatherRow1() {
+  Widget _buildWeatherRow1(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
         Expanded(
           child: _buildInfoCard(
+            context,
             "Temperature",
             '${weatherData[0]['temp']}°C',
             Icons.thermostat,
@@ -287,6 +320,7 @@ class _HomePageState extends State<HomePage>
         const SizedBox(width: 12.0),
         Expanded(
           child: _buildInfoCard(
+            context,
             "Humidity",
             "${weatherData[0]['humidity']}%",
             Icons.opacity,
@@ -296,6 +330,7 @@ class _HomePageState extends State<HomePage>
         const SizedBox(width: 12.0),
         Expanded(
           child: _buildInfoCard(
+            context,
             "Light",
             "${weatherData[0]['lightIntensity']} Lux",
             Icons.lightbulb,
@@ -306,12 +341,13 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-  Widget _buildWeatherRow2() {
+  Widget _buildWeatherRow2(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
         Expanded(
           child: _buildInfoCard(
+            context,
             "Air Pressure",
             "${weatherData[0]['airPressure']} hPa",
             Icons.compress,
@@ -321,6 +357,7 @@ class _HomePageState extends State<HomePage>
         const SizedBox(width: 12.0),
         Expanded(
           child: _buildInfoCard(
+            context,
             "Wind Speed",
             "${weatherData[0]['windSpeed']} m/s",
             Icons.air,
@@ -330,6 +367,7 @@ class _HomePageState extends State<HomePage>
         const SizedBox(width: 12.0),
         Expanded(
           child: _buildInfoCard(
+            context,
             "Rain",
             weatherData[0]['isRaining'] == 0 ? "No Rain" : "Raining",
             Icons.umbrella,
@@ -340,12 +378,12 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-  Widget _buildInfoCard(
-      String title, String value, IconData iconData, Color color) {
+  Widget _buildInfoCard(BuildContext context, String title, String value,
+      IconData iconData, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16.0),
         boxShadow: [
           BoxShadow(
@@ -369,7 +407,7 @@ class _HomePageState extends State<HomePage>
           Text(
             title,
             style: TextStyle(
-              color: Colors.grey[700],
+              color: Theme.of(context).textTheme.bodySmall?.color,
               fontSize: 12.0,
               fontWeight: FontWeight.w500,
             ),
@@ -378,8 +416,8 @@ class _HomePageState extends State<HomePage>
           const SizedBox(height: 4.0),
           Text(
             value,
-            style: const TextStyle(
-              color: Colors.black87,
+            style: TextStyle(
+              color: Theme.of(context).textTheme.bodyLarge?.color,
               fontSize: 14.0,
               fontWeight: FontWeight.bold,
             ),
@@ -390,16 +428,16 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-  Widget _buildCircularSummary() {
+  Widget _buildCircularSummary(BuildContext context) {
     return Container(
       width: 200.0,
       height: 200.0,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: Colors.blue.withOpacity(0.3),
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -412,7 +450,7 @@ class _HomePageState extends State<HomePage>
             Text(
               "Summary",
               style: TextStyle(
-                color: Colors.grey[700],
+                color: Theme.of(context).textTheme.bodyMedium?.color,
                 fontSize: 18.0,
                 fontWeight: FontWeight.bold,
               ),
@@ -439,8 +477,8 @@ class _HomePageState extends State<HomePage>
             const SizedBox(height: 8.0),
             Text(
               weatherSummaryStatus,
-              style: const TextStyle(
-                color: Colors.black87,
+              style: TextStyle(
+                color: Theme.of(context).textTheme.bodyLarge?.color,
                 fontSize: 16.0,
                 fontWeight: FontWeight.w600,
               ),
@@ -451,11 +489,14 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-  Widget _buildSevenDayForecastTable() {
+  Widget _buildSevenDayForecastTable(BuildContext context) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16.0),
         boxShadow: [
           BoxShadow(
@@ -470,16 +511,11 @@ class _HomePageState extends State<HomePage>
         children: [
           Row(
             children: [
-              const Icon(Icons.calendar_today,
-                  color: Color(0xFF2196F3), size: 20),
+              Icon(Icons.calendar_today, color: theme.colorScheme.primary, size: 20),
               const SizedBox(width: 8),
-              const Text(
+              Text(
                 'Weather Forecast',
-                style: TextStyle(
-                  color: Colors.black87,
-                  fontSize: 18.0,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
             ],
           ),
@@ -488,220 +524,35 @@ class _HomePageState extends State<HomePage>
             scrollDirection: Axis.horizontal,
             child: DataTable(
               headingRowColor: MaterialStateProperty.all(
-                const Color(0xFF2196F3).withOpacity(0.1),
+                theme.colorScheme.primary.withOpacity(0.1),
               ),
-              columns: const [
+              columns: [
                 DataColumn(
-                  label: Text(
-                    'Date',
-                    style: TextStyle(
-                      color: Colors.black87,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  label: Text('Date', style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
                 ),
                 DataColumn(
-                  label: Text(
-                    'Max Temp',
-                    style: TextStyle(
-                      color: Colors.black87,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  label: Text('Max Temp', style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
                 ),
                 DataColumn(
-                  label: Text(
-                    'Min Temp',
-                    style: TextStyle(
-                      color: Colors.black87,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  label: Text('Min Temp', style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
                 ),
                 DataColumn(
-                  label: Text(
-                    'Conditions',
-                    style: TextStyle(
-                      color: Colors.black87,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  label: Text('Conditions', style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
                 ),
               ],
               rows: weatherForecastData.map<DataRow>((record) {
                 return DataRow(
                   cells: [
-                    DataCell(Text(
-                      '${record['date']}',
-                      style: const TextStyle(color: Colors.black87),
-                    )),
-                    DataCell(Text(
-                      '${record['tempmax']}°C',
-                      style: const TextStyle(color: Colors.black87),
-                    )),
-                    DataCell(Text(
-                      '${record['tempmin']}°C',
-                      style: const TextStyle(color: Colors.black87),
-                    )),
-                    DataCell(Text(
-                      '${record['conditions']}',
-                      style: const TextStyle(color: Colors.black87),
-                    )),
+                    DataCell(Text('${record['date']}', style: textTheme.bodyMedium)),
+                    DataCell(Text('${record['tempmax']}°C', style: textTheme.bodyMedium)),
+                    DataCell(Text('${record['tempmin']}°C', style: textTheme.bodyMedium)),
+                    DataCell(Text('${record['conditions']}', style: textTheme.bodyMedium)),
                   ],
                 );
               }).toList(),
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildDrawer() {
-    return Drawer(
-      child: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF2196F3), Color(0xFF64B5F6)],
-          ),
-        ),
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: <Widget>[
-            if (userInfo != null)
-              DrawerHeader(
-                decoration: const BoxDecoration(
-                  color: Colors.transparent,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const CircleAvatar(
-                      radius: 40,
-                      backgroundColor: Colors.white,
-                      child: Icon(Icons.person,
-                          size: 50, color: Color(0xFF2196F3)),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      '${userInfo[0]['username']}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      '${userInfo[0]['email']}',
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ListTile(
-              leading: const Icon(Icons.person, color: Colors.white),
-              title:
-                  const Text('Profile', style: TextStyle(color: Colors.white)),
-              onTap: () {
-                Navigator.pushNamed(context, '/profile');
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.settings, color: Colors.white),
-              title:
-                  const Text('Settings', style: TextStyle(color: Colors.white)),
-              onTap: () {
-                Navigator.pushNamed(context, '/settings');
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.logout, color: Colors.white),
-              title:
-                  const Text('Logout', style: TextStyle(color: Colors.white)),
-              onTap: () {
-                Navigator.pushNamed(context, '/login');
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBottomBar() {
-    return BottomAppBar(
-      elevation: 8,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            IconButton(
-              icon:
-                  const Icon(Icons.share, size: 28.0, color: Color(0xFF2196F3)),
-              onPressed: () {
-                launch(
-                    'https://play.google.com/store/games?hl=en_US&gl=US&pli=1');
-              },
-            ),
-            IconButton(
-              icon: const Icon(Icons.location_on,
-                  size: 28.0, color: Color(0xFF2196F3)),
-              onPressed: () {
-                _getCurrentLocation();
-              },
-            ),
-            IconButton(
-              icon:
-                  const Icon(Icons.star, size: 28.0, color: Color(0xFF2196F3)),
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      title: const Text('Rate Us'),
-                      content: RatingBar.builder(
-                        initialRating: rating,
-                        minRating: 1,
-                        direction: Axis.horizontal,
-                        allowHalfRating: true,
-                        itemCount: 5,
-                        itemSize: 40.0,
-                        itemBuilder: (context, _) => const Icon(
-                          Icons.star,
-                          color: Colors.amber,
-                        ),
-                        onRatingUpdate: (value) {
-                          setState(() {
-                            rating = value;
-                          });
-                        },
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () {
-                            print('User Rating: $rating');
-                            Navigator.pop(context);
-                          },
-                          child: const Text('Submit'),
-                        ),
-                      ],
-                    );
-                  },
-                );
-              },
-            ),
-          ],
-        ),
       ),
     );
   }
