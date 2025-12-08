@@ -1,0 +1,39 @@
+# Flutter
+Weather-Station/build/
+Weather-Station/.dart_tool/
+Weather-Station/.packages
+Weather-Station/.pub-cache/
+Weather-Station/.pub/
+Weather-Station/.metadata
+
+# Python
+backend/venv/
+backend/__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+__pycache__
+
+# Old model files (using new v4 model now)
+backend/rf_model_pkl
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Database
+*.db
+*.sqlite
+
+# Environment variables
+.env
