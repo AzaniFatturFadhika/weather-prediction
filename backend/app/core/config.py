@@ -36,9 +36,9 @@ class Settings:
     MODEL_PATH: str = os.path.join(
         os.path.dirname(__file__), 
         '..', '..', '..', 
-        'models - Random Forest - Prediksi cuma pake tanggal', 
+        'ml-models', 
         'new', 
-        'v4_weather_model_combined.joblib'
+        'combined.joblib'
     )
     
     # CORS Settings

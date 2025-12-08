@@ -24,8 +24,8 @@ backend/
 │   └── utils/               # Utility functions
 │       ├── email.py         # Email utilities
 │       └── security.py      # Security utilities
-├── main_new.py              # Application entry point (NEW)
-├── main.py                  # Legacy entry point (OLD)
+├── main.py                  # Application entry point (Modular Architecture)
+├── legacy_fetch_api.py      # Legacy API fetcher
 ├── requirements.txt         # Python dependencies
 └── weather_app_bd.sql       # Database schema
 ```
@@ -72,7 +72,7 @@ PORT=8000
 **Option A: Using new refactored code (recommended)**
 
 ```bash
-python main_new.py
+python main.py
 ```
 
 **Option B: Using legacy code**
@@ -171,14 +171,12 @@ The new structure provides:
 - Type safety
 - Automatic documentation
 
-Old `main.py` is kept for backward compatibility but `main_new.py` is recommended for new development.
-
 ## 🐛 Troubleshooting
 
 **Model not loading?**
 
 - Check model path in `app/core/config.py`
-- Ensure model file exists: `models - Random Forest - Prediksi cuma pake tanggal/new/v4_weather_model_combined.joblib`
+- Ensure model file exists: `ml-models/new/combined.joblib`
 
 **Database connection failed?**
 
