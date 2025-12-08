@@ -8,9 +8,6 @@ from fastapi.middleware.cors import CORSMiddleware
 import MySQLdb
 from pydantic import BaseModel
 import bcrypt
-import numpy as np
-from sklearn.linear_model import LinearRegression
-import pickle
 import uvicorn
 from datetime import datetime, timedelta
 import joblib
@@ -264,81 +261,6 @@ def getLastWeatherData(location: str = None):
     finally:
         cursor.close()
         conn.close()
-
-
-# *******
-
-# weather prediction
-# Internal access: http://127.0.0.1:8000/weather-data/get-predicted-data?day=7&&month=2&&year=2012
-@app.get("/weather-data/get-predicted-data")
-def getPredictedWeatherData(day: int = None, month: int = None, year: int = None):
-    day = day if day is not None else 0
-    month = month if month is not None else 0
-    year = year if year is not None else 0
-
-    # Create a datetime object for the given date
-    start_date = datetime(year, month, day)
-
-    finalResult = []
-
-    # Generate three consecutive dates starting from the given date
-    for i in range(3):
-        # Increment the date by one day
-        current_date = start_date + timedelta(days=i)
-        day = current_date.strftime('%d')
-        month = current_date.strftime('%m')
-        year = current_date.strftime('%Y')
-        print(f"{day}-{month}-{year}")
-
-        # load saved model
-        with open('rf_model_pkl', 'rb') as f:
-            rf_model = pickle.load(f)
-
-        conditions_mapping = {
-            0: 'Clear',
-            1: 'Overcast',
-            2: 'Partially cloudy',
-            3: 'Rain',
-            4: 'Rain, Overcast',
-            5: 'Rain, Partially cloudy'
-        }
-
-        features = [[day, month, year]]
-
-        # Predict the values
-        predicted_values = rf_model.predict(features)
-
-        # Print the predicted values
-        tempmax = round(predicted_values[0][0], 3)
-        tempmin = round(predicted_values[0][1], 3)
-        temp = round(predicted_values[0][2], 3)
-        humidity = round(predicted_values[0][3], 3)
-        windspeed = round(predicted_values[0][4], 3)
-        pressure = round(predicted_values[0][5], 3)
-        conditions = round(predicted_values[0][6])
-
-        print("Predicted tempmax (C):", tempmax)
-        print("Predicted tempmin (C):", tempmin)
-        print("Predicted temp (C):", temp)
-        print("Predicted humidity (%):", humidity)
-        print("Predicted windspeed (m/s):", windspeed)
-        print("Predicted sea level pressure:", pressure)
-        print("Predicted conditions:", conditions_mapping[conditions])
-
-        finalResult.append({
-                'date': f"{day}-{month}-{year}",
-                'tempmax': tempmax,
-                'tempmin': tempmin,
-                'temp': temp,
-                'humidity': humidity,
-                'windspeed': windspeed,
-                'pressure': pressure,
-                'conditions': conditions_mapping[conditions]
-            })
-
-
-    return finalResult
-
 
 
 # *******
