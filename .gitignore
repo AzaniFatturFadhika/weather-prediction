@@ -18,6 +18,13 @@ __pycache__
 # Old model files (using new v4 model now)
 backend/rf_model_pkl
 
+# Model training files (not needed in production)
+models*/historical_data_*.csv
+models*/*.ipynb
+models*/weather_api.py
+models*/weather_prediction_gui_*.py
+models*/venv/
+
 # IDE
 .vscode/
 .idea/
