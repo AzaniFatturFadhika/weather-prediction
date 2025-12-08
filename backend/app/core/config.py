@@ -33,13 +33,18 @@ class Settings:
     OTP_EXPIRY_SECONDS: int = 300  # 5 minutes
     
     # AI Model Settings
-    MODEL_PATH: str = os.path.join(
-        os.path.dirname(__file__), 
-        '..', '..', '..', 
-        'ml-models', 
-        'new', 
-        'combined.joblib'
-    )
+    _BASE_DIR: str = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    _DEFAULT_MODEL_PATH: str = os.path.join(_BASE_DIR, "ml_models", "combined.joblib")
+
+    _model_path_env: Optional[str] = os.getenv("MODEL_PATH")
+    if _model_path_env:
+        MODEL_PATH: str = (
+            _model_path_env
+            if os.path.isabs(_model_path_env)
+            else os.path.abspath(os.path.join(_BASE_DIR, _model_path_env))
+        )
+    else:
+        MODEL_PATH: str = _DEFAULT_MODEL_PATH
     
     # CORS Settings
     CORS_ORIGINS: list = ["*"]

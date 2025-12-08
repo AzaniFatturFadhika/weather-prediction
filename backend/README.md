@@ -86,6 +86,36 @@ python main.py
 - Swagger UI: http://localhost:8000/docs
 - ReDoc: http://localhost:8000/redoc
 
+## 🐳 Docker & Cloudflare Tunnel
+
+1. Copy `.env.example` to `.env` and fill in values (keep `DB_HOST=db` if you want to use the bundled MySQL service; set a strong `DB_PASSWORD`).
+2. Ensure your model file exists at `./ml_models/combined.joblib` (relative to this `backend/` folder) or set `MODEL_PATH` in `.env` to a different location. Relative paths are resolved from the `backend/` folder. The compose file mounts `./ml_models` to `/app/ml_models` inside the container to match the default `MODEL_PATH`.
+3. Cloudflare Tunnel setup:
+   - Copy `cloudflared/config.yml.example` to `cloudflared/config.yml`.
+   - Update `tunnel` and `hostname`, then place your tunnel credential JSON from `cloudflared tunnel create ...` inside `cloudflared/` (it will be mounted to `/etc/cloudflared`).
+   - The ingress should point to `http://backend:8000`. Example:
+     ```yaml
+     tunnel: your-tunnel-id
+     credentials-file: /etc/cloudflared/your-tunnel-id.json
+     ingress:
+       - hostname: your.hostname.com
+         service: http://backend:8000
+       - service: http_status:404
+     ```
+4. Build and start everything:
+   ```bash
+   docker compose up -d --build
+   ```
+5. Inspect logs:
+   ```bash
+   docker compose logs -f backend
+   docker compose logs -f cloudflared
+   ```
+
+Notes:
+- MySQL is seeded from `weather_app_bd.sql` on first start. Point `DB_HOST` to an external MySQL instance if you do not want the bundled database.
+- If you do not want to run Cloudflare locally, remove or comment out the `cloudflared` service in `docker-compose.yml` before starting.
+
 ## 📡 API Endpoints
 
 ### Authentication (`/auth`)
