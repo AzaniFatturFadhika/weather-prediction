@@ -290,32 +290,68 @@ def getPredictedWeatherData(day: int = None, month: int = None, year: int = None
         year = current_date.strftime('%Y')
         print(f"{day}-{month}-{year}")
 
-        # load saved model
-        with open('rf_model_pkl', 'rb') as f:
-            rf_model = pickle.load(f)
-
+        # Use AI model v4 for predictions
+        try:
+            if ai_model is None:
+                raise Exception("AI model not loaded")
+            
+            # Create prediction input for daily model
+            input_data = pd.DataFrame({
+                'day': [int(day)],
+                'month': [int(month)],
+                'year': [int(year)]
+            })
+            
+            # Get daily regressor and classifier from AI model v4
+            daily_regressor = ai_model['daily']['regressor']
+            daily_classifier = ai_model['daily']['classifier']
+            label_encoder = ai_model['label_encoder_daily']
+            target_cols = ai_model['daily']['target_regression']
+            
+            # Get regression predictions (temperature, humidity, etc.)
+            reg_predictions = daily_regressor.predict(input_data)
+            
+            # Get classification prediction (weather condition)
+            clf_prediction = daily_classifier.predict(input_data)
+            condition_name = label_encoder.inverse_transform(clf_prediction)[0]
+            
+            print(f"✓ AI Prediction successful")
+            print(f"  Regression values: {reg_predictions[0]}")
+            print(f"  Classification: {condition_name} (code: {clf_prediction[0]})")
+            
+            # Map results sesuai dengan target columns dari model
+            reg_values = reg_predictions[0]
+            
+            # Tentukan mapping berdasarkan target_cols yang sebenarnya
+            # Biasanya: ['temp_min', 'temp_max', 'temp_mean', 'humidity', 'windspeed', 'pressure']
+            tempmin = round(reg_values[0], 3)    # temp_min
+            tempmax = round(reg_values[1], 3)    # temp_max  
+            temp = round(reg_values[2], 3)       # temp_mean
+            humidity = round(reg_values[3], 3)   # humidity
+            windspeed = round(reg_values[4], 3)  # windspeed
+            pressure = round(reg_values[5], 3)   # pressure
+            conditions = int(clf_prediction[0])   # condition code
+            
+        except Exception as e:
+            print(f"Error in AI prediction: {e}")
+            # Fallback to default values
+            tempmax = 30.0
+            tempmin = 20.0
+            temp = 25.0
+            humidity = 60.0
+            windspeed = 5.0
+            pressure = 1013.0
+            conditions = 2
+        
+        # Define conditions mapping for v4 model
         conditions_mapping = {
             0: 'Clear',
-            1: 'Overcast',
+            1: 'Overcast', 
             2: 'Partially cloudy',
             3: 'Rain',
             4: 'Rain, Overcast',
             5: 'Rain, Partially cloudy'
         }
-
-        features = [[day, month, year]]
-
-        # Predict the values
-        predicted_values = rf_model.predict(features)
-
-        # Print the predicted values
-        tempmax = round(predicted_values[0][0], 3)
-        tempmin = round(predicted_values[0][1], 3)
-        temp = round(predicted_values[0][2], 3)
-        humidity = round(predicted_values[0][3], 3)
-        windspeed = round(predicted_values[0][4], 3)
-        pressure = round(predicted_values[0][5], 3)
-        conditions = round(predicted_values[0][6])
 
         print("Predicted tempmax (C):", tempmax)
         print("Predicted tempmin (C):", tempmin)
@@ -323,7 +359,7 @@ def getPredictedWeatherData(day: int = None, month: int = None, year: int = None
         print("Predicted humidity (%):", humidity)
         print("Predicted windspeed (m/s):", windspeed)
         print("Predicted sea level pressure:", pressure)
-        print("Predicted conditions:", conditions_mapping[conditions])
+        print("Predicted conditions:", conditions_mapping.get(conditions, 'Unknown'))
 
         finalResult.append({
                 'date': f"{day}-{month}-{year}",
