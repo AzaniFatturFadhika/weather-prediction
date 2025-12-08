@@ -52,7 +52,7 @@ app.add_middleware(
 
 # ============== AI MODEL LOADING ==============
 # Load the AI model at startup
-MODEL_PATH = os.path.join(os.path.dirname(__file__), '..', 'models - Random Forest - Prediksi cuma pake tanggal', 'new', 'v4_weather_model_combined.joblib')
+MODEL_PATH = os.path.join(os.path.dirname(__file__), '..', 'models - Random Forest', 'new', 'v4_weather_model_combined.joblib')
 ai_model = None
 
 try:
