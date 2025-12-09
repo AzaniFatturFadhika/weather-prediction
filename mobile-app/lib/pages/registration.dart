@@ -72,8 +72,12 @@ class _RegistrationPageState extends State<RegistrationPage> {
   Future<void> sendOTP() async {
     if (_formKey.currentState!.validate()) {
       _dialogOtpSendingLoading();
-      final Uri url = Uri.parse('$myDomain/generate_otp/?email=${emailController.text}');
-      final http.Response response = await http.post(url);
+      final Uri url = Uri.parse('$myDomain/auth/generate-otp');
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': emailController.text}),
+      );
 
       Navigator.of(context).pop(); // Close loading dialog
       if (response.statusCode == 200) {
@@ -116,7 +120,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
       otp: otpController.text,
     );
 
-    final Uri url = Uri.parse('$myDomain/users/');
+    final Uri url = Uri.parse('$myDomain/auth/register');
     final http.Response response = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},

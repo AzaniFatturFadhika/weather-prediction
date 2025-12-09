@@ -95,7 +95,7 @@ class AIPredictionService {
   static Future<Map<String, dynamic>> getModelInfo() async {
     try {
       final response = await http.get(
-        Uri.parse('$myDomain/ai-model/info'),
+        Uri.parse('$myDomain/ai-prediction/model-info'),
       );
 
       if (response.statusCode == 200) {

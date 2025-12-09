@@ -99,8 +99,10 @@ class _HomePageContentState extends State<HomePageContent>
   dynamic userInfo;
 
   Future<void> fetchUserInfo() async {
+    // This assumes that the user's authentication token is sent automatically by a framework
+    // or interceptor. If not, the request must be updated to include the token.
     final response =
-        await http.get(Uri.parse('$myDomain/userInfo?username=$myUsername'));
+        await http.get(Uri.parse('$myDomain/auth/user-info'));
     if (response.statusCode == 200) {
       if (mounted) {
         setState(() {
@@ -108,7 +110,10 @@ class _HomePageContentState extends State<HomePageContent>
         });
       }
     } else {
-      throw Exception('Failed to load user data');
+      // It's better to handle the error gracefully, e.g., by showing a message
+      // or redirecting to the login page if unauthorized.
+      print('Failed to load user data: ${response.statusCode}');
+      // throw Exception('Failed to load user data');
     }
   }
 
@@ -119,7 +124,7 @@ class _HomePageContentState extends State<HomePageContent>
   Future<void> fetchWeatherData() async {
     try {
       final response = await http
-          .get(Uri.parse('$myDomain/weather-data/get/last?location=Gazipur'));
+          .get(Uri.parse('$myDomain/weather-data/last'));
 
       if (response.statusCode == 200) {
         if (mounted) {
@@ -148,13 +153,21 @@ class _HomePageContentState extends State<HomePageContent>
   Future<void> fetchWeatherForecast() async {
     try {
       final now = DateTime.now();
-      final response = await http.get(Uri.parse(
-          '$myDomain/weather-data/get-predicted-data?day=${now.day}&month=${now.month}&year=${now.year}'));
+      final response = await http.post(
+        Uri.parse('$myDomain/ai-prediction/daily'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'day': now.day,
+          'month': now.month,
+          'year': now.year,
+          'num_days': 7,
+        }),
+      );
 
       if (response.statusCode == 200) {
         if (mounted) {
           setState(() {
-            weatherForecastData = json.decode(response.body);
+            weatherForecastData = json.decode(response.body)['data'];
           });
         }
       }
@@ -253,10 +266,6 @@ class _HomePageContentState extends State<HomePageContent>
                 child: ListView(
                   padding: const EdgeInsets.all(16.0),
                   children: <Widget>[
-                    const SizedBox(height: 8.0),
-                    _buildSearchBar(context),
-                    const SizedBox(height: 16.0),
-                    _buildAIDemoButton(context),
                     const SizedBox(height: 20.0),
                     if (weatherData.isNotEmpty) _buildWeatherRow1(context),
                     const SizedBox(height: 16.0),
@@ -273,39 +282,7 @@ class _HomePageContentState extends State<HomePageContent>
           );
   }
 
-  Widget _buildSearchBar(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: TextField(
-        controller: searchController,
-        style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
-        decoration: InputDecoration(
-          hintText: 'Search for cities',
-          hintStyle: TextStyle(color: Theme.of(context).hintColor),
-          prefixIcon: Icon(Icons.search, color: Theme.of(context).hintColor),
-          filled: true,
-          fillColor: Theme.of(context).cardColor,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(30.0),
-            borderSide: BorderSide.none,
-          ),
-          contentPadding: const EdgeInsets.symmetric(vertical: 16),
-        ),
-        onChanged: (value) {
-          // Handle search logic here
-        },
-      ),
-    );
-  }
-
+ 
   Widget _buildWeatherRow1(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -495,63 +472,61 @@ class _HomePageContentState extends State<HomePageContent>
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
 
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(16.0),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    return GestureDetector(
+      onTap: () => Navigator.pushNamed(context, '/forecast'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(Icons.calendar_today, color: theme.colorScheme.primary, size: 20),
-              const SizedBox(width: 8),
               Text(
-                'Weather Forecast',
-                style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                'Next 7 Days',
+                style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
+              const Icon(Icons.arrow_forward_ios, size: 16),
             ],
           ),
           const SizedBox(height: 16.0),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: DataTable(
-              headingRowColor: MaterialStateProperty.all(
-                theme.colorScheme.primary.withOpacity(0.1),
-              ),
-              columns: [
-                DataColumn(
-                  label: Text('Date', style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
-                ),
-                DataColumn(
-                  label: Text('Max Temp', style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
-                ),
-                DataColumn(
-                  label: Text('Min Temp', style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
-                ),
-                DataColumn(
-                  label: Text('Conditions', style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
-                ),
-              ],
-              rows: weatherForecastData.map<DataRow>((record) {
-                return DataRow(
-                  cells: [
-                    DataCell(Text('${record['date']}', style: textTheme.bodyMedium)),
-                    DataCell(Text('${record['tempmax']}°C', style: textTheme.bodyMedium)),
-                    DataCell(Text('${record['tempmin']}°C', style: textTheme.bodyMedium)),
-                    DataCell(Text('${record['conditions']}', style: textTheme.bodyMedium)),
-                  ],
+          SizedBox(
+            height: 150,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: weatherForecastData.length,
+              itemBuilder: (context, index) {
+                final day = weatherForecastData[index];
+                // Assuming 'date' is a string like '2025-12-09'
+                final date = DateTime.parse(day['date']);
+                final dayOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][date.weekday - 1];
+
+                return Container(
+                  width: 100,
+                  margin: const EdgeInsets.only(right: 12),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: theme.cardColor,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      Text(dayOfWeek, style: textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold)),
+                      _getWeatherIcon(day['conditions'] ?? 'Clear'),
+                      Text(
+                        '${day['temp_max']}° / ${day['temp_min']}°',
+                        style: textTheme.bodyMedium,
+                      ),
+                    ],
+                  ),
                 );
-              }).toList(),
+              },
             ),
           ),
         ],
@@ -559,49 +534,35 @@ class _HomePageContentState extends State<HomePageContent>
     );
   }
 
-  Widget _buildAIDemoButton(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.symmetric(horizontal: 8.0),
-      child: Column(
-        children: [
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.pushNamed(context, '/forecast');
-            },
-            icon: const Icon(Icons.calendar_view_week),
-            label: const Text('Weather Forecast (Date Range)'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue.shade700,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              elevation: 4,
-              minimumSize: const Size(double.infinity, 50),
-            ),
-          ),
-          const SizedBox(height: 8),
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.pushNamed(context, '/ai-demo');
-            },
-            icon: const Icon(Icons.psychology),
-            label: const Text('AI Prediction Demo (Testing)'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green.shade700,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              elevation: 4,
-              minimumSize: const Size(double.infinity, 45),
-            ),
-          ),
-        ],
-      ),
-    );
+  Icon _getWeatherIcon(String condition) {
+    Color iconColor;
+    IconData iconData;
+
+    switch (condition.toLowerCase()) {
+      case 'partially cloudy':
+        iconData = Icons.wb_cloudy;
+        iconColor = Colors.grey;
+        break;
+      case 'rain':
+      case 'showers':
+        iconData = Icons.grain;
+        iconColor = Colors.blue;
+        break;
+      case 'clear':
+      case 'sunny':
+        iconData = Icons.wb_sunny;
+        iconColor = Colors.orange;
+        break;
+      case 'overcast':
+        iconData = Icons.cloud;
+        iconColor = Colors.blueGrey;
+        break;
+      default:
+        iconData = Icons.wb_sunny;
+        iconColor = Colors.orange;
+    }
+    return Icon(iconData, color: iconColor, size: 36);
   }
+
+
 }

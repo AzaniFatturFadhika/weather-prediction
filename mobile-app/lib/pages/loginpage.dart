@@ -27,7 +27,7 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       final response = await http.post(
-        Uri.parse('$myDomain/login/'), // Your API endpoint
+        Uri.parse('$myDomain/auth/login'), // Your API endpoint
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },

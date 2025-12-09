@@ -12,8 +12,12 @@ class OtpPage extends StatelessWidget {
 
     Future<void> sendOTP(String email) async {
       try {
-        final Uri url = Uri.parse('$myDomain/generate_otp/?email=$email');
-        final http.Response response = await http.get(url);
+        final Uri url = Uri.parse('$myDomain/auth/generate-otp');
+        final http.Response response = await http.post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: ({'email': email}),
+        );
 
         if (response.statusCode == 200) {
           print('OTP sent successfully.');
