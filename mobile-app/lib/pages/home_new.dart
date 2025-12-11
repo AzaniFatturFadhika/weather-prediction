@@ -443,15 +443,18 @@ class _HomePageNewState extends State<HomePageNew> {
           height: 110,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            itemCount:
-                _hourlyForecast.isEmpty ? 6 : _hourlyForecast.take(6).length,
+            itemCount: _hourlyForecast.isEmpty
+                ? 6
+                : (_hourlyForecast.length > 6 ? 6 : _hourlyForecast.length),
             itemBuilder: (context, index) {
               final forecast =
-                  _hourlyForecast.isNotEmpty ? _hourlyForecast[index] : {};
+                  _hourlyForecast.isNotEmpty && index < _hourlyForecast.length
+                      ? _hourlyForecast[index]
+                      : {};
               final hour = forecast['datetime']
                       ?.toString()
                       .split(' ')[1]
-                      .substring(0, 5) ??
+                      ?.substring(0, 5) ??
                   '${9 + index}:00';
               final temp =
                   forecast['temp']?.toStringAsFixed(0) ?? '${22 - index}';
