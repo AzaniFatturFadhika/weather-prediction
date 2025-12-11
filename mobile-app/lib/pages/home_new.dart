@@ -13,7 +13,6 @@ class HomePageNew extends StatefulWidget {
 
 class _HomePageNewState extends State<HomePageNew> {
   bool _isLoading = true;
-  Map<String, dynamic>? _currentWeather;
   List<dynamic> _hourlyForecast = [];
   List<dynamic> _dailyForecast = [];
   String _location = "Semarang"; // Default location
@@ -33,7 +32,7 @@ class _HomePageNewState extends State<HomePageNew> {
       // 1. SIAPKAN SEMUA REQUEST
       final requestCurrent = http.get(
         Uri.parse('$myDomain/weather-data/last?location=$_location'),
-      );
+      ).timeout(const Duration(seconds: 10));
 
       final requestHourly = http.post(
         Uri.parse('$myDomain/ai-prediction/hourly'),
@@ -45,7 +44,7 @@ class _HomePageNewState extends State<HomePageNew> {
           'hour': now.hour,
           'num_hours': 24,
         }),
-      );
+      ).timeout(const Duration(seconds: 10));
 
       final requestDaily = http.post(
         Uri.parse('$myDomain/ai-prediction/daily'),
@@ -56,7 +55,7 @@ class _HomePageNewState extends State<HomePageNew> {
           'num_days': 7,
           'year': now.year,
         }),
-      );
+      ).timeout(const Duration(seconds: 10));
 
       // 2. JALANKAN SEMUA BERSAMAAN
       final results = await Future.wait([
@@ -89,7 +88,9 @@ class _HomePageNewState extends State<HomePageNew> {
         SnackBar(content: Text('Gagal mengambil data: $e')),
       );
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 

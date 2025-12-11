@@ -33,6 +33,9 @@ wheels/
 # Environment
 .env
 .env.local
+cloudflared/config.yml
+cloudflared/*.json
+cloudflared/cert.pem
 
 # Database
 *.sql.backup

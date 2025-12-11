@@ -1,0 +1,14 @@
+.git
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+*.db
+*.sqlite
+*.joblib
+ml_models/
+ml-models/
+weather_app_bd.sql
+.env
+.env.local
