@@ -461,7 +461,7 @@ class _HomePageNewState extends State<HomePageNew> {
                   _hourlyForecast.isNotEmpty && index < _hourlyForecast.length
                       ? _hourlyForecast[index]
                       : {};
-              
+
               // Parse hour safely
               String hour = '${9 + index}:00';
               if (forecast['datetime'] != null) {
@@ -475,7 +475,7 @@ class _HomePageNewState extends State<HomePageNew> {
                   debugPrint('Error parsing hour: $e');
                 }
               }
-              
+
               final temp =
                   forecast['temp']?.toStringAsFixed(0) ?? '${22 - index}';
               final condition = forecast['conditions'] ?? 'Clear';
