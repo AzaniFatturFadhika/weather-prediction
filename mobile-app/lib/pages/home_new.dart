@@ -439,8 +439,9 @@ class _HomePageNewState extends State<HomePageNew> {
     final humidity = (humRaw is num) ? humRaw.toStringAsFixed(0) : '0';
     final windRaw = weather['windSpeed'];
     final windSpeed = (windRaw is num) ? windRaw.toStringAsFixed(1) : '0';
-    final isRaining = weather['isRaining'] ?? 0;
-    final precip = (isRaining == 1) ? '90%' : '10%';
+    final pressureRaw = weather['pressure'];
+    final airPressure =
+        (pressureRaw is num) ? pressureRaw.toStringAsFixed(0) : '0';
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 15),
@@ -458,9 +459,9 @@ class _HomePageNewState extends State<HomePageNew> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildStatItem(Icons.water_drop_outlined, precip, 'Precipitation'),
           _buildStatItem(Icons.opacity, '$humidity%', 'Humidity'),
           _buildStatItem(Icons.air, '$windSpeed km/h', 'Wind speed'),
+          _buildStatItem(Icons.speed, '$airPressure hPa', 'Air pressure'),
         ],
       ),
     );

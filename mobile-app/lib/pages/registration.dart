@@ -39,8 +39,10 @@ class _RegistrationPageState extends State<RegistrationPage> {
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController roleController = TextEditingController();
   final TextEditingController otpController = TextEditingController();
+
+  // Default role untuk user baru
+  final String _defaultRole = 'user';
 
   // Regular expressions for form validation
   final RegExp usernameRegex = RegExp(r'^.{6,}[a-zA-Z0-9_]+$');
@@ -112,7 +114,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
       username: usernameController.text,
       password: passwordController.text,
       email: emailController.text,
-      role: roleController.text,
+      role: _defaultRole,
       otp: otpController.text,
     );
 
@@ -199,24 +201,6 @@ class _RegistrationPageState extends State<RegistrationPage> {
                   obscureText: true,
                   decoration: InputDecoration(
                     labelText: "Password",
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10.0),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16.0),
-                TextFormField(
-                  controller: roleController,
-                  validator: (value) {
-                    if (value!.isEmpty) {
-                      return 'Please enter your role';
-                    }
-                    return null;
-                  },
-                  decoration: InputDecoration(
-                    labelText: "Role",
                     filled: true,
                     fillColor: Colors.white,
                     border: OutlineInputBorder(
