@@ -439,7 +439,7 @@ class _HomePageNewState extends State<HomePageNew> {
     final humidity = (humRaw is num) ? humRaw.toStringAsFixed(0) : '0';
     final windRaw = weather['windSpeed'];
     final windSpeed = (windRaw is num) ? windRaw.toStringAsFixed(1) : '0';
-    final pressureRaw = weather['pressure'];
+    final pressureRaw = weather['airPressure'];
     final airPressure =
         (pressureRaw is num) ? pressureRaw.toStringAsFixed(0) : '0';
 
