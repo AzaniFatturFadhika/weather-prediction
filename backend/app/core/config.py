@@ -26,8 +26,8 @@ class Settings:
     # Email Settings
     EMAIL_HOST: str = "smtp.gmail.com"
     EMAIL_PORT: int = 587
-    EMAIL_USERNAME: str = os.getenv("EMAIL_USERNAME", "1901029@iot.bdu.ac.bd")
-    EMAIL_PASSWORD: str = os.getenv("EMAIL_PASSWORD", "ohvgfbujrmliuepi")
+    EMAIL_USERNAME: str = os.getenv("EMAIL_USERNAME", "warsenosetyono@gmail.com")
+    EMAIL_PASSWORD: str = os.getenv("EMAIL_PASSWORD", "wfzlohiviczbiclz")
     
     # Security Settings
     OTP_EXPIRY_SECONDS: int = 300  # 5 minutes
